@@ -4,7 +4,8 @@ import json
 import pytz
 import io
 
-sparkles_emoji = ['sparkles', '✨']
+sparkles_emoji = ['sparkles', '✨'] # Сюда записать название ембодзи и само емодзи, на которое будет реагировать бот
+# Отрытие бд
 starboard_file = 'starboard_messages.json'
 try:
     with open(starboard_file, 'r') as file:
@@ -23,12 +24,12 @@ class Starboard(commands.Cog):
         channel = guild.get_channel(payload.channel_id)
         message = await channel.fetch_message(payload.message_id)
 
-        if payload.emoji.name in ['sparkles', '✨']:
+        if payload.emoji.name in sparkles_emoji:
             starboard_channel = guild.get_channel(self.starboard_channel_id)
             reactions = [reaction for reaction in message.reactions if str(reaction.emoji) in sparkles_emoji]
             total_reactions = sum([reaction.count for reaction in reactions])
 
-            if total_reactions >= 20:
+            if total_reactions >= 20: # Реакция, на которую будет создаваться новый пост
                 if str(message.id) in starboard_messages:
                     # Обновление существующего эмбеда
                     starboard_message_id = starboard_messages[str(message.id)]
@@ -41,10 +42,10 @@ class Starboard(commands.Cog):
                         starboard_embed.set_field_at(0, name='Реакций:', value=f"{sparkles_count}  ✨")
                     await starboard_message.edit(embed=starboard_embed)
                 else:
-                    if message.attachments:
+                    if message.attachments: # Если есть файл
                         file = message.attachments[0]
                         file_url = message.attachments[0].url
-                        if file.content_type.startswith('video/'):
+                        if file.content_type.startswith('video/'): # Если есть видео
                             # Создание нового эмбеда
                             starboard_embed = disnake.Embed(color=0xE1AE53)
 
@@ -82,14 +83,12 @@ class Starboard(commands.Cog):
                             file_data = io.BytesIO()
                             await file.save(file_data)
 
-                            # Переместите указатель памяти в начало файла
                             file_data.seek(0)
 
                             # Отправка видеофайла
                             starboard_message = await starboard_channel.send(file=disnake.File(file_data, filename=file.filename),
                                                              embed=starboard_embed, view=view)
 
-                            # Закрытие потока памяти
                             file_data.close()
 
                             # Сохранение ID сообщения и соответствующего ембеда
@@ -171,14 +170,14 @@ class Starboard(commands.Cog):
         channel = guild.get_channel(payload.channel_id)
         message = await channel.fetch_message(payload.message_id)
 
-        if payload.emoji.name in ['sparkles', '✨']:
+        if payload.emoji.name in sparkles_emoji:
             starboard_channel = guild.get_channel(self.starboard_channel_id)
             reactions = [reaction for reaction in message.reactions if str(reaction.emoji) in sparkles_emoji]
             total_reactions = sum([reaction.count for reaction in reactions])
 
-            if total_reactions >= 20:
+            if total_reactions >= 18: # Реакция, на которую будет создаваться новый пост
                 if str(message.id) in starboard_messages:
-                    # Обновление эмбеда, если реакция была удалена, но общее количество реакций все еще больше 2
+                    # Обновление эмбеда, если реакция была удалена, но общее количество реакций все еще больше 20
                     starboard_message_id = starboard_messages[str(message.id)]
                     starboard_message = await starboard_channel.fetch_message(starboard_message_id)
                     starboard_embed = starboard_message.embeds[0]
@@ -197,11 +196,11 @@ class Starboard(commands.Cog):
                     del starboard_messages[str(message.id)]
                     save_starboard_messages()
 
-
+# Сохранение бд
 def save_starboard_messages():
     with open(starboard_file, 'w') as file:
         json.dump(starboard_messages, file)
 
-
+# Коги
 def setup(bot):
     bot.add_cog(Starboard(bot))
